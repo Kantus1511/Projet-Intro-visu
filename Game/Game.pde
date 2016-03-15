@@ -10,7 +10,6 @@ float rotX = 0.0;
 float rotZ = 0.0;
 int coef = 80;
 
-Shape shape = new Shape(600, 20, 600, 220, "Assignement 3");
 void draw() {
   background(255);
 
@@ -28,7 +27,6 @@ void draw() {
   rotateZ(rotZ);
   fill(220);
   box(600, 20, 600);
-  //shape.render();
 }
 
 void mouseWheel(MouseEvent event) {
@@ -66,62 +64,5 @@ void mouseDragged() {
     if (rotZ < -PI/3) {
       rotZ = -PI/3;
     }
-  }
-}
-
-class Shape {
-  int x;
-  int y;
-  int z;
-  int col;
-  String text;
-  Shape(int x, int y, int z, int col, String text) {
-    this.x = x;
-    this.y = y;
-    this.z = z;
-    this.col = col;
-    this.text = text;
-  }
-  void render() {
-    fill(col);
-    beginShape();
-    vertex(-x, -y, -z);
-    vertex(-x, -y, z);
-    vertex(x, -y, z);
-    vertex(x, -y, -z);
-    endShape(CLOSE);
-    beginShape();
-    vertex(-x, y, -z);
-    vertex(-x, y, z);
-    vertex(x, y, z);
-    vertex(x, y, -z);
-    endShape(CLOSE);
-    beginShape();
-    vertex(-x, -y, z);
-    vertex(x, -y, z);
-    vertex(x, y, z);
-    vertex(-x, y, z);
-    endShape(CLOSE);
-    beginShape();
-    vertex(x, -y, z);
-    vertex(x, -y, -z);
-    vertex(x, y, -z);
-    vertex(x, y, z);
-    endShape(CLOSE);
-    beginShape();
-    vertex(x, -y, -z);
-    vertex(x, y, -z);
-    vertex(-x, y, -z);
-    vertex(-x, -y, -z);
-    endShape(CLOSE);
-    beginShape();
-    vertex(-x, -y, -z);
-    vertex(-x, y, -z);
-    vertex(-x, y, z);
-    vertex(-x, -y, z);
-    endShape(CLOSE);
-    textSize(80);
-    fill(255, 0, 0);
-    text(text, -x+50, -2*y, z);
   }
 }
