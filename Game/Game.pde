@@ -1,16 +1,22 @@
 float depth = 2000;
+float rotX = 0.0;
+float rotZ = 0.0;
+int coef = 50;
+Mover mover;
+
+int boxX = 1200;
+int boxY = 20;
+int boxZ = 1200;
+
 void settings() {
   size(1500, 900, P3D);
 }
 void setup() {
-  noStroke();
+  mover = new Mover();
 }
 
-float rotX = 0.0;
-float rotZ = 0.0;
-int coef = 80;
-
 void draw() {
+  noStroke();
   background(255);
 
   textSize(50);
@@ -20,13 +26,17 @@ void draw() {
   text("speed " + coef + "%", -1280, -1080); 
 
   camera(0, 0, depth, 0, 0, 0, 0, 1, 0);
-  directionalLight(50, 100, 125, 0, -1, 0);
+  directionalLight(50, 100, 125, -1, 1, -1);
   ambientLight(102, 102, 102);
 
   rotateX(rotX);
   rotateZ(rotZ);
   fill(220);
-  box(600, 20, 600);
+  box(boxX, boxY, boxZ);
+
+  mover.update();
+  mover.checkEdges();
+  mover.display();
 }
 
 void mouseWheel(MouseEvent event) {
@@ -44,25 +54,25 @@ void mouseWheel(MouseEvent event) {
 
 void mouseDragged() {
   if (pmouseY > mouseY) {
-    rotX += coef/1000.0;
+    rotX += coef/3000.0;
     if (rotX > PI/3) {
       rotX = PI/3;
     }
   } else if (pmouseY < mouseY) {
-    rotX -= coef/1000.0;
+    rotX -= coef/3000.0;
     if (rotX < -PI/3) {
       rotX = -PI/3;
     }
   }
   if (pmouseX > mouseX) {
-      rotZ += coef/1000.0;
-    if (rotZ > PI/3) {
-      rotZ = PI/3;
-    }
-  } else if (pmouseX < mouseX) {
-    rotZ -= coef/1000.0;
+    rotZ -= coef/3000.0;
     if (rotZ < -PI/3) {
       rotZ = -PI/3;
+    }
+  } else if (pmouseX < mouseX) {
+    rotZ += coef/3000.0;
+    if (rotZ > PI/3) {
+      rotZ = PI/3;
     }
   }
 }
