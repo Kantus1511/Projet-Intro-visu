@@ -33,10 +33,12 @@ class Mover {
   }
 
   void display() {
+    pushMatrix();
     strokeWeight(2);
     fill(127);
     translate(location.x, -(sizeSphere+boxY/2) + location.y, location.z);
     sphere(sizeSphere);
+    popMatrix();
   }
 
   void checkEdges() {
@@ -63,6 +65,19 @@ class Mover {
         location.z = -boxZ/2;
       }
       velocity.z = -dissipation*velocity.z;
+    }
+  }
+  
+  void checkCylinderCollision() {
+    for (int i=0; i<cylinders.size(); i++){
+      int dist = (int)(sqrt(sq(cylinders.get(i).pos.x-location.x) + sq(cylinders.get(i).pos.z-location.z)));
+      if (dist <= cylinders.get(i).cylinderBaseSize+sizeSphere){
+         PVector n = new PVector();
+         PVector.sub(location, cylinders.get(i).pos, n);
+         PVector.add(cylinders.get(i).pos, n.mult(1.01), location);
+         n.normalize();
+         velocity.sub(n.mult(velocity.dot(n)).mult(2));
+      }
     }
   }
 }
