@@ -10,8 +10,8 @@ class Cylinder {
 
   Cylinder(int x, int z) {
     pos = new PVector(x,0,z);
-    cylinderBaseSize = 50;
-    cylinderHeight = 150;
+    cylinderBaseSize = 80;
+    cylinderHeight = 120;
     cylinderResolution = 40;
     float angle;
     float[] xs = new float[cylinderResolution + 1];
@@ -50,6 +50,7 @@ class Cylinder {
   void render() {
     pushMatrix();
     rotateX(PI/2);
+    fill(176,196,222);
     translate(pos.x, pos.z, pos.y);
     shape(openCylinder);
     shape(ceiling);
