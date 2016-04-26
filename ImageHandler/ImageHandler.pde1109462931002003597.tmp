@@ -1,0 +1,173 @@
+PImage img;
+HScrollbar thresholdBar1;
+HScrollbar thresholdBar2;
+
+void settings() {
+  size(1600, 600);
+}
+
+void setup () {
+  img = loadImage("board1.jpg");
+  thresholdBar1 = new HScrollbar(800, 580, 800, 20);
+  thresholdBar2 = new HScrollbar(800, 550, 800, 20);
+}
+
+void draw() {
+  image(img, 0, 0);
+  //drawThresh();
+  //drawHue();
+  //image(convolute(img), 800, 0);
+  drawSobelThresh();
+}
+
+void drawThresh() {
+  image(thresholdBinary(img, (int)(thresholdBar1.getPos()*255)), 800, 0);
+  thresholdBar1.display();
+  thresholdBar1.update();
+}
+
+void drawSobelThresh() {
+  int val1 = (int)(thresholdBar1.getPos()*255);
+  int val2 = (int)(thresholdBar2.getPos()*255);
+  image(sobel(hueImg(img, Math.min(val1, val2), Math.max(val1, val2))), 800, 0);
+  thresholdBar1.display();
+  thresholdBar1.update();
+  thresholdBar2.display();
+  thresholdBar2.update();
+}
+
+void drawHue() {
+  int val1 = (int)(thresholdBar1.getPos()*255);
+  int val2 = (int)(thresholdBar2.getPos()*255);
+  image(hueImg(img, Math.min(val1, val2), Math.max(val1, val2)), 800, 0);
+  thresholdBar1.display();
+  thresholdBar1.update();
+  thresholdBar2.display();
+  thresholdBar2.update();
+}
+
+PImage thresholdBinary(PImage img, int threshold) {
+  PImage result = createImage(img.width, img.height, RGB);
+  for (int i = 0; i < img.width * img.height; i++) {
+    float bright = brightness(img.pixels[i]);
+    if (bright > threshold) {
+      result.pixels[i] = color(255, 255, 255);
+    } else {
+      result.pixels[i] = color(0, 0, 0);
+    }
+  }
+  return result;
+}
+
+PImage thresholdBinaryInverted(PImage img, int threshold) {
+  PImage result = createImage(img.width, img.height, RGB);
+  for (int i = 0; i < img.width * img.height; i++) {
+    float bright = brightness(img.pixels[i]);
+    if (bright > threshold) {
+      result.pixels[i] = color(0, 0, 0);
+    } else {
+      result.pixels[i] = color(255, 255, 255);
+    }
+  }
+  return result;
+}
+
+PImage hueImg(PImage img, int min, int max) {
+  PImage result = createImage(img.width, img.height, HSB);
+  for (int i = 0; i < img.width * img.height; i++) {
+    float h = hue(img.pixels[i]);
+    if (h > min && h < max) {
+      result.pixels[i] = img.pixels[i];
+    } else {
+      result.pixels[i] = color(0);
+    }
+  }
+  return result;
+}
+
+PImage convolute(PImage img) {
+  float[][] kernel = { { 0, 0, 0 }, 
+    { -1, 1, 0 }, 
+    { 0, 0, 0 }};
+  int N = kernel.length;
+  PImage result = createImage(img.width, img.height, ALPHA);
+
+  for (int i=0; i<img.width * img.height; i++) { 
+    float weight = 0.f;  
+    int x = i % img.width;
+    int y = (int) Math.floor(i / (float) img.width);
+    float sum = 0;
+    for (int j=x-N/2; j<=x+N/2; j++) {
+      for (int m=y-N/2; m<=y+N/2; m++) {
+        if (j>=0 && j<img.width && m>=0 && m<img.height) {
+          sum += brightness(img.pixels[m*img.width+j])*kernel[j-(x-N/2)][m-(y-N/2)];
+          if (kernel[j-(x-N/2)][m-(y-N/2)] != 0) {
+            weight += kernel[j-(x-N/2)][m-(y-N/2)];
+          }
+        }
+      }
+    }
+    result.pixels[i] = color((int)(sum/weight));
+  }
+
+  return result;
+}
+
+PImage sobel(PImage img) {
+  float[][] hKernel = { { 0, 1, 0 }, 
+                        { 0, 0, 0 }, 
+                        { 0, -1, 0 } };
+  float[][] vKernel = { { 0, 0, 0 }, 
+                        { 1, 0, -1 }, 
+                        { 0, 0, 0 } };                 
+  PImage result = createImage(img.width, img.height, ALPHA);
+  
+  for (int i = 0; i < img.width * img.height; i++) {
+    result.pixels[i] = color(0);
+  }
+  
+  float max=0;
+  float[] buffer = new float[img.width * img.height];
+  
+  for (int i=0; i<img.width * img.height; i++) { 
+    float sumh = 0.f;
+    float sumv = 0.f;
+    
+    int N = hKernel.length;
+    int x = i % img.width;
+    int y = (int) Math.floor(i / (float) img.width);
+    for (int j=x-N/2; j<=x+N/2; j++) {
+      for (int m=y-N/2; m<=y+N/2; m++) {
+        if (j>=0 && j<img.width && m>=0 && m<img.height) {
+          sumh += brightness(img.pixels[m*img.width+j])*hKernel[j-(x-N/2)][m-(y-N/2)];
+        }
+      }
+    }
+    
+    N = vKernel.length;
+    for (int j=x-N/2; j<=x+N/2; j++) {
+      for (int m=y-N/2; m<=y+N/2; m++) {
+        if (j>=0 && j<img.width && m>=0 && m<img.height) {
+          sumv += brightness(img.pixels[m*img.width+j])*vKernel[j-(x-N/2)][m-(y-N/2)];
+        }
+      }
+    }
+    
+    float sum = sqrt(pow(sumh, 2) + pow(sumv, 2));
+    buffer[i] = sum;
+    if (sum > max){
+      max = sum;
+    }
+  }
+  
+  for (int y = 2; y < img.height - 2; y++) { 
+    for (int x = 2; x < img.width - 2; x++) { 
+      if (buffer[y * img.width + x] > (int)(max * 0.3f)) { // 30% of the max
+        result.pixels[y * img.width + x] = color(255);
+      } else {
+        result.pixels[y * img.width + x] = color(0);
+      }
+    }
+  }
+  return result;
+}
