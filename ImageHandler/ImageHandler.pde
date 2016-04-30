@@ -1,23 +1,31 @@
-PImage img;
+import processing.video.*;
+
+Capture cam;
 HScrollbar thresholdBar1;
 HScrollbar thresholdBar2;
 
 void settings() {
-  size(1600, 600);
+  size(640, 480);
 }
 
 void setup () {
-  img = loadImage("board1.jpg");
-  thresholdBar1 = new HScrollbar(800, 580, 800, 20);
-  thresholdBar2 = new HScrollbar(800, 550, 800, 20);
+  String[] cameras = Capture.list();
+  if (cameras.length == 0) {
+    println("There are no cameras available for capture.");
+    exit();
+  } else {
+    println("Available cameras:");
+    for (int i = 0; i < cameras.length; i++) {
+      println(cameras[i]);
+    }
+    cam = new Capture(this, cameras[0]);
+    cam.start();
+  }
 }
 
 void draw() {
   image(img, 0, 0);
-  //drawThresh();
-  //drawHue();
-  //image(convolute(img), 800, 0);
-  drawSobelThresh();
+  hough(sobel(convolute(hueImg(img, 117, 134))));
 }
 
 void drawThresh() {
@@ -29,7 +37,7 @@ void drawThresh() {
 void drawSobelThresh() {
   int val1 = (int)(thresholdBar1.getPos()*255);
   int val2 = (int)(thresholdBar2.getPos()*255);
-  image(sobel(hueImg(img, Math.min(val1, val2), Math.max(val1, val2))), 800, 0);
+  image(sobel(convolute(hueImg(img, Math.min(val1, val2), Math.max(val1, val2)))), 800, 0);
   thresholdBar1.display();
   thresholdBar1.update();
   thresholdBar2.display();
@@ -86,9 +94,9 @@ PImage hueImg(PImage img, int min, int max) {
 }
 
 PImage convolute(PImage img) {
-  float[][] kernel = { { 0, 0, 0 }, 
-    { -1, 1, 0 }, 
-    { 0, 0, 0 }};
+  float[][] kernel = { { 10, 10, 10 }, 
+    { 10, 10, 10 }, 
+    { 10, 10, 10 }};
   int N = kernel.length;
   PImage result = createImage(img.width, img.height, ALPHA);
 
@@ -170,4 +178,73 @@ PImage sobel(PImage img) {
     }
   }
   return result;
+}
+
+void hough(PImage edgeImg) {
+  float discretizationStepsPhi = 0.06f;
+  float discretizationStepsR = 2.5f;
+  
+  int phiDim = (int) (Math.PI / discretizationStepsPhi);
+  int rDim = (int) (((edgeImg.width + edgeImg.height) * 2 + 1) / discretizationStepsR);
+
+  int[] accumulator = new int[(phiDim + 2) * (rDim + 2)];
+
+  for (int y = 0; y < edgeImg.height; y++) {
+    for (int x = 0; x < edgeImg.width; x++) {
+      if (brightness(edgeImg.pixels[y * edgeImg.width + x]) != 0) {
+        for (int m = 0; m < phiDim; m++) {
+          float phi = m*discretizationStepsPhi;
+          float r = x*cos(phi) + y*sin(phi);
+          int coordR = Math.round((r / discretizationStepsR))+(rDim - 1)/2;
+          accumulator[(m+1)*(rDim + 2) + 1 + coordR] += 1;
+        }
+      }
+    }
+  }
+  
+  
+  PImage houghImg = createImage(rDim + 2, phiDim + 2, ALPHA);
+  for (int i = 0; i < accumulator.length; i++) {
+    houghImg.pixels[i] = color(min(255, accumulator[i]));
+  }
+  
+  houghImg.updatePixels();
+  
+  for (int idx = 0; idx < accumulator.length; idx++) {
+    if (accumulator[idx] > 200) {
+      int accPhi = (int) (idx / (rDim + 2)) - 1;
+      int accR = idx - (accPhi + 1) * (rDim + 2) - 1;
+      float r = (accR - (rDim - 1) * 0.5f) * discretizationStepsR;
+      float phi = accPhi * discretizationStepsPhi;
+
+      int x0 = 0;
+      int y0 = (int) (r / sin(phi));
+      int x1 = (int) (r / cos(phi));
+      int y1 = 0;
+      int x2 = edgeImg.width;
+      int y2 = (int) (-cos(phi) / sin(phi) * x2 + r / sin(phi));
+      int y3 = edgeImg.width;
+      int x3 = (int) (-(y3 - r / sin(phi)) * (sin(phi) / cos(phi)));
+
+      stroke(204,102,0);
+      if (y0 > 0) {
+        if (x1 > 0)
+          line(x0, y0, x1, y1);
+        else if (y2 > 0)
+          line(x0, y0, x2, y2);
+        else
+          line(x0, y0, x3, y3);
+      }
+      else {
+        if (x1 > 0) {
+          if (y2 > 0)
+            line(x1, y1, x2, y2);
+          else
+            line(x1, y1, x3, y3);
+        }
+        else
+          line(x2, y2, x3, y3);
+      }
+    }
+  }
 }
