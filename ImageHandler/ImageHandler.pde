@@ -3,6 +3,7 @@ import processing.video.*;
 Capture cam;
 HScrollbar thresholdBar1;
 HScrollbar thresholdBar2;
+PImage img;
 
 void settings() {
   size(640, 480);
@@ -24,8 +25,12 @@ void setup () {
 }
 
 void draw() {
+  if (cam.available() == true) {
+    cam.read();
+  }
+  img = cam;
   image(img, 0, 0);
-  hough(sobel(convolute(hueImg(img, 117, 134))));
+  //hough(sobel(convolute(hueImg(img, 117, 134))));
 }
 
 void drawThresh() {
