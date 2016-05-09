@@ -19,7 +19,7 @@ void setup () {
     for (int i = 0; i < cameras.length; i++) {
       println(cameras[i]);
     }
-    cam = new Capture(this, cameras[0]);
+    cam = new Capture(this, cameras[5]);
     cam.start();
   }
 }
@@ -191,7 +191,7 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
   float discretizationStepsPhi = 0.06f;
   float discretizationStepsR = 2.5f;
   ArrayList<Integer> bestCandidates = new ArrayList();
-  int minVotes = 200;
+  int minVotes = 300;
 
   int phiDim = (int) (Math.PI / discretizationStepsPhi);
   int rDim = (int) (((edgeImg.width + edgeImg.height) * 2 + 1) / discretizationStepsR);
@@ -241,6 +241,12 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
       }
     }
   }
+  
+  /*for (int i=0; i<accumulator.length; i++){
+    if (accumulator[i] >= minVotes){
+      bestCandidates.add(i);
+    }
+  }*/
 
   java.util.Collections.sort(bestCandidates, new HoughComparator(accumulator));
 
