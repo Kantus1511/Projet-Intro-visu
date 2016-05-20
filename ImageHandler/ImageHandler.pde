@@ -1,16 +1,21 @@
 import processing.video.*;
+import java.util.*;
 
 Capture cam;
 HScrollbar thresholdBar1;
 HScrollbar thresholdBar2;
+QuadGraph quads;
 PImage img;
+PImage houghImg;
+int width = 400;
+int height = 300;
 
 void settings() {
-  size(640, 480);
+  size(3*width, height);
 }
 
 void setup () {
-  String[] cameras = Capture.list();
+  /*String[] cameras = Capture.list();
   if (cameras.length == 0) {
     println("There are no cameras available for capture.");
     exit();
@@ -19,48 +24,55 @@ void setup () {
     for (int i = 0; i < cameras.length; i++) {
       println(cameras[i]);
     }
-    cam = new Capture(this, cameras[5]);
+    cam = new Capture(this, cameras[0]);
     cam.start();
-  }
+  }*/
 }
 
 void draw() {
-  if (cam.available() == true) {
+  /*if (cam.available() == true) {
     cam.read();
   }
-  img = cam;
+  img = cam;*/
+  img = loadImage("board2.jpg");
+  int sat = 90;
+  int minHue = 100;
+  int maxHue = 135;
+  int bright = 20;
+  img.resize(width, height);
   image(img, 0, 0);
-  ArrayList<PVector> vectors = hough(sobel(convolute(hueImg(img, 117, 134))), 10);
-  getIntersections(vectors);
+  img = lineDetection(img, sat, minHue, maxHue, bright);
+  
+  ArrayList<PVector> vectors = hough(img, 6);
+  QuadGraph qg = new QuadGraph();
+  qg.build(vectors, img.width, height);
+  List<int[]> cycles = qg.findCycles();
+  List<PVector> intersecs = new ArrayList();
+  
+  if (cycles.isEmpty()){
+    intersecs = vectors.subList(0, 4);
+  } else {
+    for (int i=0; i<cycles.get(0).length; i++){
+      intersecs.add(vectors.get(cycles.get(0)[i]));
+    }
+  }
+  getIntersections(intersecs); 
+  
+  image(houghImg, width, 0);
+  image(img, 2*width, 0);
 }
 
-void drawThresh() {
-  image(thresholdBinary(img, (int)(thresholdBar1.getPos()*255)), 800, 0);
-  thresholdBar1.display();
-  thresholdBar1.update();
+PImage lineDetection(PImage img, int sat, int minHue, int maxHue, int bright){
+  PImage ret = img;
+  ret = thresholdSaturation(ret, sat);
+  ret = hueImg(ret, minHue, maxHue);
+  ret = thresholdBrightness(ret, bright);
+  ret = convolute(ret);
+  ret = sobel(ret);
+  return ret;
 }
 
-void drawSobelThresh() {
-  int val1 = (int)(thresholdBar1.getPos()*255);
-  int val2 = (int)(thresholdBar2.getPos()*255);
-  image(sobel(convolute(hueImg(img, Math.min(val1, val2), Math.max(val1, val2)))), 800, 0);
-  thresholdBar1.display();
-  thresholdBar1.update();
-  thresholdBar2.display();
-  thresholdBar2.update();
-}
-
-void drawHue() {
-  int val1 = (int)(thresholdBar1.getPos()*255);
-  int val2 = (int)(thresholdBar2.getPos()*255);
-  image(hueImg(img, Math.min(val1, val2), Math.max(val1, val2)), 800, 0);
-  thresholdBar1.display();
-  thresholdBar1.update();
-  thresholdBar2.display();
-  thresholdBar2.update();
-}
-
-PImage thresholdBinary(PImage img, int threshold) {
+PImage thresholdBrightness(PImage img, int threshold) {
   PImage result = createImage(img.width, img.height, RGB);
   for (int i = 0; i < img.width * img.height; i++) {
     float bright = brightness(img.pixels[i]);
@@ -72,6 +84,20 @@ PImage thresholdBinary(PImage img, int threshold) {
   }
   return result;
 }
+
+public PImage thresholdSaturation(PImage img, float threshold) {
+    PImage result = createImage(img.width, img.height, ALPHA);
+    for (int i = 0; i < img.width * img.height; i++) {
+      if (saturation(img.pixels[i]) > threshold) {
+        result.pixels[i] = img.pixels[i];
+      } else {
+        result.pixels[i] = color(0);
+      }
+    }
+    return result;
+
+  }
+
 
 PImage thresholdBinaryInverted(PImage img, int threshold) {
   PImage result = createImage(img.width, img.height, RGB);
@@ -100,9 +126,9 @@ PImage hueImg(PImage img, int min, int max) {
 }
 
 PImage convolute(PImage img) {
-  float[][] kernel = { { 10, 10, 10 }, 
-    { 10, 10, 10 }, 
-    { 10, 10, 10 }};
+  float[][] kernel = { { 9, 12, 9 },
+                       { 12, 15, 12 },
+                       { 9, 12, 9 } };
   int N = kernel.length;
   PImage result = createImage(img.width, img.height, ALPHA);
 
@@ -241,20 +267,15 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
       }
     }
   }
-  
-  /*for (int i=0; i<accumulator.length; i++){
-    if (accumulator[i] >= minVotes){
-      bestCandidates.add(i);
-    }
-  }*/
 
   java.util.Collections.sort(bestCandidates, new HoughComparator(accumulator));
 
-  PImage houghImg = createImage(rDim + 2, phiDim + 2, ALPHA);
+  houghImg = createImage(rDim + 2, phiDim + 2, ALPHA);
   for (int i = 0; i < accumulator.length; i++) {
     houghImg.pixels[i] = color(min(255, accumulator[i]));
   }
 
+  houghImg.resize(width, height);
   houghImg.updatePixels();
 
   for (int idx = 0; idx < Math.min(nLines, bestCandidates.size()); idx++) {
