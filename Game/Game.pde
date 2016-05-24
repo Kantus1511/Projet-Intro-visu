@@ -24,6 +24,9 @@ PGraphics score;
 PGraphics barChart;
 boolean shift = false;
 HScrollbar hs;
+ImageHandler ih;
+Capture cam;
+PImage img;
 
 void settings() {
   size(frameX, frameY, P3D);
@@ -37,9 +40,27 @@ void setup() {
   score = createGraphics(140, 160, P2D);
   barChart = createGraphics(chartX, chartY, P2D);
   hs = new HScrollbar(400, 860, 400, 20);
+  ih = new ImageHandler();
+  String []args = {"Image processing window"};
+  PApplet.runSketch(args, ih);
 }
 
 void draw() {
+  PVector angles = ih.getAngles();
+  rotX = angles.x;
+  rotZ = angles.y;
+  
+  if (rotX > PI/3) {
+    rotX = PI/3;
+  } else if (rotX < PI/3) {
+    rotX = -PI/3;
+  }
+  if (rotZ > PI/3) {
+    rotZ = PI/3;
+  } else if (rotZ < PI/3) {
+    rotZ = -PI/3;
+  }
+  
   noStroke();
   background(255);
   drawData();
@@ -50,7 +71,7 @@ void draw() {
   image(topView, 20, frameY-180);
   image(score, 220, frameY-180);
   image(barChart, 400, frameY-180);
-  if (millis() > time + 1000 && !shift){
+  if (millis() > time + 1000 && !shift) {
     scores.add(totalScore);
     time = millis();
     if (totalScore > highScore) highScore = totalScore;
@@ -58,17 +79,17 @@ void draw() {
   hs.update();
   hs.display();
   sizeRect = 20*hs.getPos();
-  
-  if (shift){
+
+  if (shift) {
     textSize(18);
     fill(0);
-    text("Edit Mode", 10, 25); 
+    text("Edit Mode", 10, 25);
   } else {
     textSize(18);
     fill(0);
     text("rotX: " + (int)Math.toDegrees(rotX) + "°", 10, 25); 
     text("rotZ: " + (int)Math.toDegrees(rotZ) + "°", 120, 25); 
-    text("speed " + coef + "%", 230, 25); 
+    text("speed " + coef + "%", 230, 25);
   }
 
   pushMatrix();
@@ -94,32 +115,32 @@ void draw() {
   popMatrix();
 }
 
-void drawData(){
+void drawData() {
   dataSurface.beginDraw();
-  dataSurface.background(255,222,173);
+  dataSurface.background(255, 222, 173);
   dataSurface.endDraw();
 }
 
-void drawTop(){
+void drawTop() {
   float scale = dataXY/(float)boxX;
   topView.noStroke();
   topView.beginDraw();
-  topView.background(0,0,123);
+  topView.background(0, 0, 123);
   topView.fill(255, 0, 0);
   topView.ellipse(dataXY/2+scale*mover.location.x, dataXY/2+scale*mover.location.z, 2*scale*mover.sizeSphere, 2*scale*mover.sizeSphere);
-  topView.fill(255,222,173);
-  for (int i=0; i<cylinders.size(); i++){
+  topView.fill(255, 222, 173);
+  for (int i=0; i<cylinders.size(); i++) {
     topView.ellipse(scale*(cylinders.get(i).pos.x+boxX/2), scale*(cylinders.get(i).pos.z+boxZ/2), 2*scale*cylinders.get(i).cylinderBaseSize, 2*scale*cylinders.get(i).cylinderBaseSize);
   }
   topView.endDraw();
 }
 
-void drawScore(){
+void drawScore() {
   score.beginDraw();
-  score.background(255,255,255);
+  score.background(255, 255, 255);
   score.noStroke();
-  score.fill(255,222,173);
-  score.rect(5,5,130,150);
+  score.fill(255, 222, 173);
+  score.rect(5, 5, 130, 150);
   score.fill(0);
   score.textSize(16);
   score.text("Total Score", 10, 25);
@@ -131,17 +152,17 @@ void drawScore(){
   score.endDraw();
 }
 
-void drawChart(){
+void drawChart() {
   barChart.beginDraw();
-  barChart.background(255,242,213);
-  barChart.fill(0,0,123);
+  barChart.background(255, 242, 213);
+  barChart.fill(0, 0, 123);
   barChart.noStroke();
   float scale = 0.0;
-  if (highScore > 0.0){
+  if (highScore > 0.0) {
     scale = chartY/highScore;
   }
-  for(int i=0; i<scores.size(); i++){
-    barChart.rect(i*sizeRect,chartY-scale*scores.get(i),sizeRect,scale*scores.get(i));
+  for (int i=0; i<scores.size(); i++) {
+    barChart.rect(i*sizeRect, chartY-scale*scores.get(i), sizeRect, scale*scores.get(i));
   }
   barChart.endDraw();
 }
@@ -168,14 +189,14 @@ void mousePressed(MouseEvent e) {
       int posX = (int)((mouseX-width/2)*0.00117*depth);
       int posZ = (int)((mouseY-height/2)*0.00117*depth);
       boolean alone = true;
-      for (int i=0; i<cylinders.size(); i++){
+      for (int i=0; i<cylinders.size(); i++) {
         int dist = (int)(sqrt(sq(cylinders.get(i).pos.x-posX) + sq(cylinders.get(i).pos.z-posZ)));
-        if (dist < 2*cylinders.get(i).cylinderBaseSize){
+        if (dist < 2*cylinders.get(i).cylinderBaseSize) {
           alone = false;
           break;
         }
       }
-      if (alone){
+      if (alone) {
         cylinders.add(new Cylinder(posX, posZ));
       }
     }

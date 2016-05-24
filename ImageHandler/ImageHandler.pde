@@ -7,62 +7,65 @@ HScrollbar thresholdBar2;
 QuadGraph quads;
 PImage img;
 PImage houghImg;
-int width = 400;
-int height = 300;
+TwoDThreeD td;
+int width = 640;
+int height = 480;
+int sat = 50;
+int minHue = 60;
+int maxHue = 130;
+int bright = 50;
 
 void settings() {
-  size(3*width, height);
+  size(width, height);
 }
 
 void setup () {
-  /*String[] cameras = Capture.list();
+  String[] cameras = Capture.list();
   if (cameras.length == 0) {
     println("There are no cameras available for capture.");
     exit();
   } else {
-    println("Available cameras:");
-    for (int i = 0; i < cameras.length; i++) {
-      println(cameras[i]);
-    }
     cam = new Capture(this, cameras[0]);
     cam.start();
-  }*/
+  }
 }
 
 void draw() {
-  /*if (cam.available() == true) {
+  if (cam.available() == true) {
     cam.read();
   }
-  img = cam;*/
-  img = loadImage("board2.jpg");
-  int sat = 90;
-  int minHue = 100;
-  int maxHue = 135;
-  int bright = 20;
-  img.resize(width, height);
-  image(img, 0, 0);
-  img = lineDetection(img, sat, minHue, maxHue, bright);
-  
-  ArrayList<PVector> vectors = hough(img, 6);
-  QuadGraph qg = new QuadGraph();
-  qg.build(vectors, img.width, height);
-  List<int[]> cycles = qg.findCycles();
-  List<PVector> intersecs = new ArrayList();
-  
-  if (cycles.isEmpty()){
-    intersecs = vectors.subList(0, 4);
-  } else {
-    for (int i=0; i<cycles.get(0).length; i++){
-      intersecs.add(vectors.get(cycles.get(0)[i]));
-    }
+  img = cam;
+
+  if (img.width != 0) {
+    img = lineDetection(img, sat, minHue, maxHue, bright);
+
+    /*ArrayList<PVector> vectors = hough(img, 6);
+    QuadGraph qg = new QuadGraph();
+    qg.build(vectors, img.width, height);
+    List<int[]> cycles = qg.findCycles();
+    List<PVector> intersecs = new ArrayList();*/
+
+    //if (vectors.size() > 3) {
+      /*if (cycles.isEmpty()) {
+        intersecs = vectors.subList(0, 4);
+      } else {
+        for (int i=0; i<cycles.get(0).length; i++) {
+          intersecs.add(vectors.get(cycles.get(0)[i]));
+        }
+      }*/
+
+      //List<PVector> inters = qg.sortCorners(getIntersections(intersecs));
+
+      image(img, 0, 0);
+
+      //PVector angles = td.get3DRotations(inters);
+      //println("rx: " + (int) degrees(angles.x) + " ry: " + (int) degrees(angles.y)
+      // + " rz: " + (int) degrees(angles.z));
+    //}
   }
-  getIntersections(intersecs); 
-  
-  image(houghImg, width, 0);
-  image(img, 2*width, 0);
 }
 
-PImage lineDetection(PImage img, int sat, int minHue, int maxHue, int bright){
+PImage lineDetection(PImage img, int sat, int minHue, int maxHue, int bright) {
   PImage ret = img;
   ret = thresholdSaturation(ret, sat);
   ret = hueImg(ret, minHue, maxHue);
@@ -86,17 +89,16 @@ PImage thresholdBrightness(PImage img, int threshold) {
 }
 
 public PImage thresholdSaturation(PImage img, float threshold) {
-    PImage result = createImage(img.width, img.height, ALPHA);
-    for (int i = 0; i < img.width * img.height; i++) {
-      if (saturation(img.pixels[i]) > threshold) {
-        result.pixels[i] = img.pixels[i];
-      } else {
-        result.pixels[i] = color(0);
-      }
+  PImage result = createImage(img.width, img.height, ALPHA);
+  for (int i = 0; i < img.width * img.height; i++) {
+    if (saturation(img.pixels[i]) > threshold) {
+      result.pixels[i] = img.pixels[i];
+    } else {
+      result.pixels[i] = color(0);
     }
-    return result;
-
   }
+  return result;
+}
 
 
 PImage thresholdBinaryInverted(PImage img, int threshold) {
@@ -126,9 +128,9 @@ PImage hueImg(PImage img, int min, int max) {
 }
 
 PImage convolute(PImage img) {
-  float[][] kernel = { { 9, 12, 9 },
-                       { 12, 15, 12 },
-                       { 9, 12, 9 } };
+  float[][] kernel = { { 9, 12, 9 }, 
+    { 12, 15, 12 }, 
+    { 9, 12, 9 } };
   int N = kernel.length;
   PImage result = createImage(img.width, img.height, ALPHA);
 
@@ -217,7 +219,7 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
   float discretizationStepsPhi = 0.06f;
   float discretizationStepsR = 2.5f;
   ArrayList<Integer> bestCandidates = new ArrayList();
-  int minVotes = 300;
+  int minVotes = 100;
 
   int phiDim = (int) (Math.PI / discretizationStepsPhi);
   int rDim = (int) (((edgeImg.width + edgeImg.height) * 2 + 1) / discretizationStepsR);
@@ -283,7 +285,7 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
     int accR = bestCandidates.get(idx) - (accPhi + 1) * (rDim + 2) - 1;
     float r = (accR - (rDim - 1) * 0.5f) * discretizationStepsR;
     float phi = accPhi * discretizationStepsPhi;
-    
+
     vectors.add(new PVector(r, phi));
 
     int x0 = 0;
@@ -316,7 +318,7 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
   return vectors;
 }
 
-ArrayList<PVector> getIntersections(java.util.List<PVector> lines) {
+ArrayList<PVector> getIntersections(List<PVector> lines) {
   ArrayList<PVector> intersections = new ArrayList<PVector>();
   for (int i = 0; i < lines.size() - 1; i++) {
     PVector line1 = lines.get(i);
@@ -326,10 +328,12 @@ ArrayList<PVector> getIntersections(java.util.List<PVector> lines) {
       float d = cos(line2.y)*sin(line1.y)-cos(line1.y)*sin(line2.y);
       int x = (int)((line2.x*sin(line1.y)-line1.x*sin(line2.y))/d);
       int y = (int)((-line2.x*cos(line1.y)+line1.x*cos(line2.y))/d);
-      intersections.add(new PVector(x, y));
-      // draw the intersection
-      fill(255, 128, 0);
-      ellipse(x, y, 10, 10);
+      if (j-i != 2) {
+        intersections.add(new PVector(x, y));
+        // draw the intersection
+        fill(255, 128, 0);
+        ellipse(x, y, 10, 10);
+      }
     }
   }
   return intersections;
