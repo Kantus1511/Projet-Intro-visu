@@ -25,7 +25,6 @@ PGraphics barChart;
 boolean shift = false;
 HScrollbar hs;
 ImageHandler ih;
-Capture cam;
 PImage img;
 
 void settings() {

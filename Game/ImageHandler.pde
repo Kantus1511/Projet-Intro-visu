@@ -3,7 +3,8 @@ import java.util.*;
 
 class ImageHandler extends PApplet {
 
-  Capture cam;
+  //Capture cam;
+  Movie cam;
   HScrollbar thresholdBar1;
   HScrollbar thresholdBar2;
   QuadGraph quads;
@@ -29,8 +30,11 @@ class ImageHandler extends PApplet {
       println("There are no cameras available for capture.");
       exit();
     } else {
-      cam = new Capture(this, cameras[0]);
-      cam.start();
+      //cam = new Capture(this, cameras[0]);
+      //cam.start();
+      cam = new Movie(this, "testvideo.mp4"); 
+      cam.loop();
+
     }
   }
 
