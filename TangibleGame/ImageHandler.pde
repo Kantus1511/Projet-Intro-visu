@@ -25,17 +25,16 @@ class ImageHandler extends PApplet {
   }
 
   void setup () {
-    String[] cameras = Capture.list();
+    /*String[] cameras = Capture.list();
     if (cameras.length == 0) {
       println("There are no cameras available for capture.");
       exit();
     } else {
-      //cam = new Capture(this, cameras[0]);
-      //cam.start();
-      cam = new Movie(this, "testvideo.mp4"); 
+      cam = new Capture(this, cameras[0]);
+      cam.start();*/
+      cam = new Movie(this, "C:\\Users\\Etienne\\Desktop\\Github files\\Git Arnaud iv\\Info visuelle\\Projet-Intro-visu\\TangibleGame\\data\\testvideo.mp4"); 
       cam.loop();
-
-    }
+    //}
   }
 
   void draw() {
@@ -43,7 +42,8 @@ class ImageHandler extends PApplet {
       cam.read();
     }
     img = cam;
-
+    image(img, 0, 0);
+    
     if (img.width != 0) {
       img = lineDetection(img, sat, minHue, maxHue, bright);
 
@@ -67,8 +67,8 @@ class ImageHandler extends PApplet {
         image(img, 0, 0);
 
         PVector angles = td.get3DRotations(inters);
-        angleX = angles.x;
-        angleY = angles.y;
+        angleX = -angles.x;
+        angleY = -angles.y;
       }
     }
   }

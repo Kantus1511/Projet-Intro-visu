@@ -51,12 +51,12 @@ void draw() {
   
   if (rotX > PI/3) {
     rotX = PI/3;
-  } else if (rotX < PI/3) {
+  } else if (rotX < -PI/3) {
     rotX = -PI/3;
   }
   if (rotZ > PI/3) {
     rotZ = PI/3;
-  } else if (rotZ < PI/3) {
+  } else if (rotZ < -PI/3) {
     rotZ = -PI/3;
   }
   
